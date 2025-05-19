@@ -1,1 +1,2 @@
 jax-lorax==0.3.0
+wandb 

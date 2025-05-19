@@ -131,4 +131,5 @@ dependencies:
       - tqdm==4.66.1
       - transformers==4.34.1
       - tzdata==2023.3
+      - wandb==0.19.11
 prefix: /home/[user]/anaconda3/envs/iscil

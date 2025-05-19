@@ -1,7 +1,7 @@
 import os
-root_path = os.environ.get('clus_path')
-if root_path is None :
-    root_path = os.environ['HOME'] + '/icskill'
+# root_path = os.environ.get('clus_path')
+# if root_path is None :
+root_path = '.'
 
 def filter_pkl_files_by_skill(directory, include_skill=None, exclude_skill=None):
     """
