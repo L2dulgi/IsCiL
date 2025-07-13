@@ -235,7 +235,7 @@ IsCiL is compared against several continual learning baselines. All algorithms c
 
 | Algorithm | Code | Description | Key Features |
 |-----------|------|-------------|--------------|
-| **IsCiL** | `iscil` | Our method | Incremental skill learning with dynamic LoRA adapters and consistency-based retrieval |
+| **IsCiL** | `iscil` | Our method | Incremental skill learning with dynamic LoRA adapters and multifaceted prototype retrieval |
 | **Sequential LoRA** | `seqlora` | Sequential adapter learning | Single large LoRA adapter (dim=64) updated sequentially |
 | **TAIL** | `tail` | Task-Adaptive Incremental Learning | Fixed small adapters (dim=16) with task-specific allocation |
 | **TAIL-G** | `tailg` | TAIL with sub-goal id | sub-goal specific adapters (dim=4) |
