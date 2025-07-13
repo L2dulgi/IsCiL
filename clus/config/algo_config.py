@@ -148,15 +148,15 @@ class EepIsCIL(ExpAlgorithmConfig) :
 
         
 def get_algorithm_configs(algo='l2m') :
-    if algo == 'l2mbase' :
-        return ExpL2MBASE()
     if algo == 'l2m' :
+        return ExpL2MBASE()
+    if algo == 'l2mg' :
         return ExpL2M()
     if algo == 'tailg' :
         return ExpTAILG()
     elif algo == 'tail' :
         return ExpTAIL()
-    elif algo == 'onelora' :
+    elif algo == 'seqlora' :
         return ExpSeqLoRA()
     elif algo == 'iscil' :
         return EepIsCIL()

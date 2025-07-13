@@ -31,7 +31,9 @@ We introduce **IsCiL**, an **adapter-based CiL framework** that addresses the li
 2. [Environment Setup](#environment-setup)
 3. [Dataset and Environment Setup](#dataset-and-environment-setup)
 4. [Running the Experiments](#running-the-experiments)
-5. [Error Management and Troubleshooting](#error-management-and-troubleshooting)
+5. [Baselines and Implementation Details](#baselines-and-implementation-details)
+6. [Evaluation](#evaluation)
+7. [Error Management and Troubleshooting](#error-management-and-troubleshooting)
 
 ---
 
@@ -74,10 +76,8 @@ pip install -e .
 ### Step 4: Set Environment Variables
 Make sure the following environment variables are set:
 ```bash
-export clus_path="/home/[exp_path]/clus"
 export XLA_PYTHON_CLIENT_PREALLOCATE=false
 ```
-Replace `[exp_path]` with the actual path on your system.
 
 ---
 
@@ -127,6 +127,192 @@ bash src/IsCiL.sh
 ```
 This script will launch the incremental learning process described in the paper.
 
+
+---
+
+## Evaluation
+
+IsCiL provides comprehensive evaluation capabilities to assess both standard task performance and generalization to unseen tasks. The evaluation framework measures continual learning metrics including Backward Transfer (BWT), Forward Transfer (FWT), and Area Under the Curve (AUC).
+
+### [Optional] Standard Evaluation (already included on training)
+
+To evaluate trained models on tasks seen during training to create the log files:
+
+```bash
+python src/l2m_evaluator.py --save_id <experiment_id>
+```
+
+This will:
+- Load saved models from each training stage
+- Evaluate performance on all learned tasks
+- Generate evaluation logs and metrics files
+
+**Example:**
+```bash
+python src/l2m_evaluator.py --save_id HelloIsCiL_complete_0
+```
+
+### Metrics 
+Calculate continual learning metrics from evaluation logs:
+```bash
+python clus/utils/metric.py -al <algo> -g <grep string>
+```
+The `-g` parameter is used to filter the logs based on the grep string, which can be the experiment ID or any other identifier.
+
+```
+========================================
+ Continual Learning Metrics (in %) 
+========================================
+BWT (Backward Transfer): XX.XX%
+FWT (Forward Transfer) : XX.XX%
+AUC (Average Score)    : XX.XX%
+========================================
+```
+
+
+## Unseen Task Evaluation
+
+To test generalization on unseen tasks, use the pretrained models and evaluate them on datastreams with unseen tasks:
+
+```bash
+python src/unseen/unseen_evaluator.py -e <env> -al <algo> -u <unseen_type> -id <evaluation_id>
+```
+
+**Parameters:**
+- `-e/--env`: Environment (`kitchen` or `mmworld`)
+- `-al/--algo`: Algorithm (`iscil`, `seq`, `ewc`, `mtseq`)
+- `-id/--id`: Evaluation ID
+
+**Example:**
+```bash
+python src/unseen/unseen_evaluator.py -e kitchen -al iscil -id HelloIsCiL_complete_0
+```
+
+### Metrics Calculation
+
+Calculate continual learning metrics from evaluation logs:
+
+```bash
+python src/unseen/unseen_metrics.py -al <algo> 
+```
+The metrics calculator displays both overall metrics and unseen-only metrics (suffixed with -A):
+
+```
+========================================
+ Continual Learning Metrics (in %) 
+========================================
+BWT (Backward Transfer): XX.XX%
+FWT (Forward Transfer) : XX.XX%
+AUC (Average Score)    : XX.XX%
+----------------------------------------
+BWT-A (Unseen Only)    : XX.XX%
+FWT-A (Unseen Only)    : XX.XX%
+AUC-A (Unseen Only)    : XX.XX%
+========================================
+```
+
+### Interpreting Results
+
+**Metrics Explanation:**
+- **BWT (Backward Transfer)**: Measures knowledge retention. Negative values indicate forgetting, positive values indicate improvement
+- **FWT (Forward Transfer)**: Initial performance on new tasks. Higher values indicate better knowledge transfer
+- **AUC (Average Score)**: Overall performance across all tasks and phases
+
+**Output Locations:**
+- Training logs: `data/IsCiL_exp/<algo>/<env>/<id>/training_log.log`
+- Unseen evaluation logs: `data/Unseen_experiments/<algo>/<env>/<unseen_type>/<id>/training_log.log`
+- Model checkpoints: `data/IsCiL_exp/<algo>/<env>/<id>/models/`
+
+---
+
+## Baselines and Implementation Details
+
+This section provides details about the baseline algorithms and implementation configurations used in our experiments.
+
+### Available Algorithms
+
+IsCiL is compared against several continual learning baselines. All algorithms can be specified using the `-al` parameter:
+
+| Algorithm | Code | Description | Key Features |
+|-----------|------|-------------|--------------|
+| **IsCiL** | `iscil` | Our method | Incremental skill learning with dynamic LoRA adapters and consistency-based retrieval |
+| **Sequential LoRA** | `seqlora` | Sequential adapter learning | Single large LoRA adapter (dim=64) updated sequentially |
+| **TAIL** | `tail` | Task-Adaptive Incremental Learning | Fixed small adapters (dim=16) with task-specific allocation |
+| **TAIL-G** | `tailg` | TAIL with sub-goal id | sub-goal specific adapters (dim=4) |
+| **L2M** | `l2m` / `l2mg` | Learn-to-Modulate | 100 learnable keys with small adapters (dim=4) |
+
+### Implementation Details
+
+#### IsCiL Configuration
+- **Memory Pool**: 100 skill-specific adapters
+- **LoRA Dimension**: 4 (parameter efficient)
+- **Retrieval**: multiple bases for multifaceted skill retrieval
+- **Key Features**:
+  - Multifaceted-prototype generation based on K-means clustering
+  - Meta-initialization from existing skills
+
+#### Baseline Configurations
+
+**Sequential LoRA (`seqlora`)**:
+- Single LoRA adapter with dimension 64
+- Updated continuously across all tasks
+- No explicit skill separation
+
+**TAIL (`tail`)**:
+- Fixed allocation of adapters per task
+- LoRA dimension: 16
+- Task-specific adapter selection
+- [Tricks] The implementation is the same as seq LoRA, and in the paper, the FWT calculated using metric.py is used as the AUC, since there is no forgetting(BWT=0).
+
+**TAIL-G (`tailg`)**:
+- Similar to TAIL but uses sub-goal level adapter selection
+
+**L2M (`l2m`/`l2mg`)**:
+- 100 learnable prototype keys
+- Small LoRA adapters (dim=4)
+- Similarity-based retrieval
+- Variants: `l2m` (base embeddings), `l2mg` (split embeddings)
+
+### Running Baseline Experiments
+
+To run experiments with different algorithms:
+
+```bash
+# IsCiL (our method)
+bash src/IsCiL.sh
+
+# Run specific baseline
+python src/train.py --algo seqlora --env kitchen --save_id baseline_seq_0
+
+# Run baseline scripts
+bash src/baselines.sh  # Runs all baseline comparisons
+```
+
+### Architecture Details
+
+All methods use the same base architecture:
+- **Diffusion Model**: Conditional diffusion with transformer backbone
+- **Model Configuration**:
+  - Hidden dimension: 512
+  - Transformer blocks: 4
+  - Attention heads: 2
+  - Head dimension: 128
+  - Diffusion steps: 64
+
+### Key Implementation Differences
+
+1. **Memory Management**:
+   - IsCiL: Dynamic pool expansion with K-means clustering
+   - Baselines: Fixed pool size or single adapter
+
+2. **Skill Retrieval**:
+   - IsCiL: multifaceted retrieval using multiple keys.
+   - L2M: Learnable key and similarity based retrieval
+   - TAIL: Task ID(or sub-goal ID) based selection
+
+3. **Adapter Initialization**:
+   - IsCiL: Meta-initialization from similar skills
+   - Others: Random or zero initialization
 ---
 
 ## Error Management and Troubleshooting
