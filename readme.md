@@ -287,32 +287,6 @@ python src/train.py --algo seqlora --env kitchen --save_id baseline_seq_0
 # Run baseline scripts
 bash src/baselines.sh  # Runs all baseline comparisons
 ```
-
-### Architecture Details
-
-All methods use the same base architecture:
-- **Diffusion Model**: Conditional diffusion with transformer backbone
-- **Model Configuration**:
-  - Hidden dimension: 512
-  - Transformer blocks: 4
-  - Attention heads: 2
-  - Head dimension: 128
-  - Diffusion steps: 64
-
-### Key Implementation Differences
-
-1. **Memory Management**:
-   - IsCiL: Dynamic pool expansion with K-means clustering
-   - Baselines: Fixed pool size or single adapter
-
-2. **Skill Retrieval**:
-   - IsCiL: multifaceted retrieval using multiple keys.
-   - L2M: Learnable key and similarity based retrieval
-   - TAIL: Task ID(or sub-goal ID) based selection
-
-3. **Adapter Initialization**:
-   - IsCiL: Meta-initialization from similar skills
-   - Others: Random or zero initialization
 ---
 
 ## Error Management and Troubleshooting
