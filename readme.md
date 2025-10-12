@@ -25,6 +25,12 @@ We introduce **IsCiL**, an **adapter-based CiL framework** that addresses the li
   2. **Evaluation** is performed by applying each skill adapter to a pre-trained model, enabling effective handling of new or changing inputs.
 ---
 
+## Related Work
+
+We thank the authors of [DMPEL](https://github.com/HarryLui98/DMPEL); our method was also evaluated on the **LIBERO** environment following their setup.
+
+---
+
 ## Table of Contents
 
 1. [Installation](#installation)
@@ -320,3 +326,18 @@ pip install wandb
 ---
 
 Enjoy exploring **Incremental Learning of Retrievable Skills for Efficient Continual Task Adaptation**!
+
+---
+
+## Citation
+
+```
+@article{lee2024incremental,
+  title={Incremental learning of retrievable skills for efficient continual task adaptation},
+  author={Lee, Daehee and Yoo, Minjong and Kim, Woo Kyung and Choi, Wonje and Woo, Honguk},
+  journal={Advances in Neural Information Processing Systems},
+  volume={37},
+  pages={17286--17312},
+  year={2024}
+}
+```
